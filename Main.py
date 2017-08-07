@@ -9,6 +9,7 @@ class VkApp:
     APP_ID = 6126927
     VERSION = "5.67"
     KEY = "g63AiqLhELfIKqIxaLbv"
+    pool = requests.Session()
 
 
 class VkOauth(VkApp):
@@ -38,7 +39,7 @@ class VkAppGroups(VkApp):
             "user_id": user_id
         }
 
-        response = requests.get("https://api.vk.com/method/friends.get", param)
+        response = self.pool.get("https://api.vk.com/method/friends.get", params=param)
         return response.json()["response"]["items"]
 
     def collect_groups(self, user_id):
@@ -48,7 +49,7 @@ class VkAppGroups(VkApp):
             "user_id": user_id
         }
 
-        response = requests.get("https://api.vk.com/method/groups.get", param)
+        response = self.pool.get("https://api.vk.com/method/groups.get", params=param)
         return response.json()
 
     def collect_group_data(self, groups_list):
@@ -62,7 +63,7 @@ class VkAppGroups(VkApp):
                 "group_ids": ",".join([str(x) for x in chunk]),
                 "fields": "members_count"
             }
-            response = requests.get("https://api.vk.com/method/groups.getById", param)
+            response = self.pool.get("https://api.vk.com/method/groups.getById", params=param)
             for item in response.json()["response"]:
                 new_group_entry = {}
                 new_group_entry["name"] = item["name"]
@@ -80,16 +81,18 @@ class VkAppGroups(VkApp):
         friend_list = self.get_freind_l(user_id)
         print("Collecting your groups...")
         my_groups = set(self.collect_groups(user_id)["response"]["items"])
-        print(len(my_groups))
         for n, friend in enumerate(friend_list):
             print("Checked {} friends out of {}".format(n + 1, len(friend_list)))
-            try:
+            # try:
+            if "error" in self.collect_groups(friend).keys():
+                pass
+            else:
                 non_unique = my_groups & set(self.collect_groups(friend)["response"]["items"])
                 my_groups -= non_unique
-                print(len(my_groups))
-            except:
-                if self.collect_groups(friend)["error"]:
-                    pass
+            # except:
+            #     print(self.collect_groups(friend))
+            #     if self.collect_groups(friend)["error"]:
+            #         pass
             time.sleep(0.5)
         return list(my_groups)
 
@@ -106,7 +109,7 @@ class VkAppGroups(VkApp):
                 "v": self.VERSION,
                 "user_ids": subject_one_id
             }
-            response = requests.get("https://api.vk.com/method/users.get", param)
+            response = self.pool.get("https://api.vk.com/method/users.get", params=param)
             print(response.json())
             subject_one_id = response.json()["response"][0]["id"]
         return subject_one_id
