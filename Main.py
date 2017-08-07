@@ -8,15 +8,15 @@ import sys
 class VkApp:
     APP_ID = 6126927
     VERSION = "5.67"
-    KEY = ""
+    KEY = "g63AiqLhELfIKqIxaLbv"
 
 
 class VkOauth(VkApp):
-    def oauth_link(self, perm=["friends", "groups"]):
+    def oauth_link(self):
         oauth_adr = "https://oauth.vk.com/authorize"
         auth_data = {
             "client_id": self.APP_ID,
-            "scope": " ".join(perm),
+            "scope": "friends groups",
             "response_type": "token",
             "v": self.VERSION
         }
@@ -28,7 +28,8 @@ class VkOauth(VkApp):
 
 
 class VkAppGroups(VkApp):
-    TOKEN = ""
+    TOKEN = "5dfd6b0dee902310df772082421968f4c06443abecbc082a8440cb18910a56daca73ac8d04b25154a1128"
+
 
     def get_freind_l(self, user_id):
         param = {
@@ -89,19 +90,14 @@ class VkAppGroups(VkApp):
             except:
                 if self.collect_groups(friend)["error"]:
                     pass
-                else:
-                    print("ОШИБКА")
             time.sleep(0.5)
         return list(my_groups)
 
     def startme(self):
-        try:
-            subject_one_id
-        except:
-            if len(sys.argv) > 1:
-                subject_one_id = sys.argv[1]
-            else:
-                subject_one_id = input("Input an ID or name\n")
+        if len(sys.argv) > 1:
+            subject_one_id = sys.argv[1]
+        else:
+            subject_one_id = input("Input an ID or name\n")
         subject_one_id = subject_one_id.strip()
         if subject_one_id.isdigit() == False:
             print("Getting your ID")
@@ -111,6 +107,7 @@ class VkAppGroups(VkApp):
                 "user_ids": subject_one_id
             }
             response = requests.get("https://api.vk.com/method/users.get", param)
+            print(response.json())
             subject_one_id = response.json()["response"][0]["id"]
         return subject_one_id
 
@@ -126,4 +123,5 @@ def main():
     a = VkGroup.collect_group_data(a)
     save_file(a)
 
-main()
+while __name__ == "__main__":
+    main()
