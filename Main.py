@@ -11,6 +11,14 @@ class VkApp:
     KEY = "g63AiqLhELfIKqIxaLbv"
     pool = requests.Session()
 
+    def make_request(self, URL, param):
+        response = self.pool.get(URL, params=param)
+        if "error" in response.json().keys():
+            time.sleep(0.5)
+            response = self.pool.get(URL, params=param)
+        return response
+
+
 
 class VkOauth(VkApp):
     def oauth_link(self):
@@ -31,25 +39,26 @@ class VkOauth(VkApp):
 class VkAppGroups(VkApp):
     TOKEN = "5dfd6b0dee902310df772082421968f4c06443abecbc082a8440cb18910a56daca73ac8d04b25154a1128"
 
-
     def get_freind_l(self, user_id):
+        URL = "https://api.vk.com/method/friends.get"
         param = {
             "access_token": self.TOKEN,
             "v": self.VERSION,
             "user_id": user_id
         }
+        response = self.make_request(URL, param)
 
-        response = self.pool.get("https://api.vk.com/method/friends.get", params=param)
         return response.json()["response"]["items"]
 
     def collect_groups(self, user_id):
+        URL = "https://api.vk.com/method/groups.get"
         param = {
             "access_token": self.TOKEN,
             "v": self.VERSION,
             "user_id": user_id
         }
+        response = self.make_request(URL,param)
 
-        response = self.pool.get("https://api.vk.com/method/groups.get", params=param)
         return response.json()
 
     def collect_group_data(self, groups_list):
@@ -57,13 +66,14 @@ class VkAppGroups(VkApp):
         groups_list_full = []
         for n, chunk in enumerate(chunks):
             print("Getting groups info... {} out of {} ready".format(100*n, len(groups_list)))
+            URL = "https://api.vk.com/method/groups.getById"
             param = {
                 "access_token": self.TOKEN,
                 "v": self.VERSION,
                 "group_ids": ",".join([str(x) for x in chunk]),
                 "fields": "members_count"
             }
-            response = self.pool.get("https://api.vk.com/method/groups.getById", params=param)
+            response = self.make_request(URL, param)
             for item in response.json()["response"]:
                 new_group_entry = {}
                 new_group_entry["name"] = item["name"]
@@ -83,16 +93,12 @@ class VkAppGroups(VkApp):
         my_groups = set(self.collect_groups(user_id)["response"]["items"])
         for n, friend in enumerate(friend_list):
             print("Checked {} friends out of {}".format(n + 1, len(friend_list)))
-            # try:
+            # Проверяем был ли пользователь удалён или заблокирован
             if "error" in self.collect_groups(friend).keys():
                 pass
             else:
                 non_unique = my_groups & set(self.collect_groups(friend)["response"]["items"])
                 my_groups -= non_unique
-            # except:
-            #     print(self.collect_groups(friend))
-            #     if self.collect_groups(friend)["error"]:
-            #         pass
             time.sleep(0.5)
         return list(my_groups)
 
@@ -104,12 +110,13 @@ class VkAppGroups(VkApp):
         subject_one_id = subject_one_id.strip()
         if subject_one_id.isdigit() == False:
             print("Getting your ID")
+            URL = "https://api.vk.com/method/users.get"
             param = {
                 "access_token": self.TOKEN,
                 "v": self.VERSION,
                 "user_ids": subject_one_id
             }
-            response = self.pool.get("https://api.vk.com/method/users.get", params=param)
+            response = self.make_request(URL, param)
             print(response.json())
             subject_one_id = response.json()["response"][0]["id"]
         return subject_one_id
