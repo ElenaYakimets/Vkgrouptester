@@ -12,6 +12,7 @@ class VkApp:
     pool = requests.Session()
 
     def make_request(self, URL, param):
+        time.sleep(0.5)
         response = self.pool.get(URL, params=param)
         if "error" in response.json().keys():
             time.sleep(0.5)
@@ -132,6 +133,7 @@ def main():
     a = VkGroup.collect_groups_friends()
     a = VkGroup.collect_group_data(a)
     save_file(a)
+    print("All done")
 
-while __name__ == "__main__":
+if __name__ == "__main__":
     main()
